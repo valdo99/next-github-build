@@ -25,15 +25,22 @@ async function index({req,res,githubSecret}){
     const sign = req.headers["x-hub-signature"];
     const hash = "sha1=" + crypto.createHmac('sha1', githubSecret).update(JSON.stringify(req.body)).digest('hex');
 
-    console.log(sign,hash);
-
     if(hash !== sign) {
         return res.send("hash !== sign");
     }
 
-    res.send("OK");
+    const localBranch = (await github.branch()).current
+    const pushBranch = req.body.ref.split("/")[2]
+
+    if( localBranch !== pushBranch ){
+        console.log("Branch is not the same as indicated");
+        return res.send("KO")
+    }
+
+    res.send("OK")
 
     try {
+
 
         console.log('Fetching repo', {tagLabel});
         await github.fetch(['--all']);
